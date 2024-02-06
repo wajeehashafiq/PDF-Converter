@@ -321,20 +321,38 @@ class PictureFragment : Fragment() {
                 1->{
                     // camera is clicked, check camera permission granted or not
                     Log.d(TAG, "showInputImageDialog: Camera is clicked check if camera permission granted or not")
-                    if(checkCameraPermission()) {
-                        pickPictureCamera()
-                    }
-                    else {
-                        requestCameraPermission.launch(arrayOf(android.Manifest.permission.CAMERA, android.Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                    //permission code ahmer
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if(checkCameraPermission()) {
+                            pickPictureCamera()
+                        }
+                        else {
+                            requestCameraPermission.launch(arrayOf(android.Manifest.permission.CAMERA, android.Manifest.permission.READ_MEDIA_IMAGES))
+                        }
+                    }else{
+                        if(checkCameraPermission()) {
+                            pickPictureCamera()
+                        }
+                        else {
+                            requestCameraPermission.launch(arrayOf(android.Manifest.permission.CAMERA, android.Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                        }
                     }
                 }
                 2->{
                     Log.d(TAG, "showInputImageDialog: Gallery is clicked check if storage permission granted or not")
-                    if (checkStoragePermission()) {
-                        pickPictureGallery()
-                    }
-                    else {
-                        requestStoragePermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    //permission code ahmer
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (checkStoragePermission13()) {
+                            pickPictureGallery()
+                        }else {
+                            requestStoragePermission.launch(android.Manifest.permission.READ_MEDIA_IMAGES)
+                        }
+                    }else{
+                        if (checkStoragePermission()) {
+                            pickPictureGallery()
+                        } else {
+                            requestStoragePermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        }
                     }
                 }
             }
@@ -415,10 +433,17 @@ class PictureFragment : Fragment() {
         return ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
     }
 
+    //ahmer check permision here for android 13
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun checkStoragePermission13() : Boolean {
+        Log.d(TAG, "checkStoragePermission: ")
+        return ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
+    }
+
     @RequiresApi(Build.VERSION_CODES.P)
     private val requestStoragePermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
-        ActivityResultCallback { isGranted ->
+        { isGranted ->
             if (isGranted) {
                 pickPictureGallery()
             }
@@ -436,7 +461,7 @@ class PictureFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.P)
     private val requestCameraPermission = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
-        ActivityResultCallback<Map<String,Boolean>>{ result ->
+        { result ->
             var areAllPermissionGranted = true
             for(isGranted in result.values){
                 areAllPermissionGranted = areAllPermissionGranted && isGranted
